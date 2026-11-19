@@ -3,3 +3,42 @@ C:\Users\AacblAdmin\Documents\ITInventoryWeb>python -m venv venv
 C:\Users\AacblAdmin\Documents\ITInventoryWeb>.\venv\Scripts\activate
 
 for activation virtual environment in windows
+
+create backup folder
+
+New-Item -ItemType Directory -Path "$HOME\Documents\ITInventoryBackups" -Force
+
+Create a dated backup
+
+$source = (Get-Location).Path
+
+$date = Get-Date -Format "yyyy-MM-dd_HH-mm"
+
+$backup = Join-Path "$HOME\Documents\ITInventoryBackups" "ITInventory_$date"
+
+New-Item -ItemType Directory -Path $backup -Force
+
+Copy-Item "$source\app.py" $backup
+Copy-Item "$source\database.py" $backup
+Copy-Item "$source\inventory.db" $backup
+
+Copy-Item "$source\templates" $backup -Recurse
+Copy-Item "$source\static" $backup -Recurse
+
+next backup for other project
+
+Copy-Item "$source\create_admin.py" $backup -ErrorAction SilentlyContinue
+
+Copy-Item "$source\setup_master.py" $backup -ErrorAction SilentlyContinue
+
+Copy-Item "$source\.flask_secret" $backup -ErrorAction SilentlyContinue
+
+Verify your backup
+
+Get-ChildItem $backup
+
+Verify SQLite database integrity
+
+python -c "import sqlite3; c=sqlite3.connect('inventory.db'); print(c.execute('PRAGMA integrity_check').fetchone()[0]); c.close()"
+
+ok

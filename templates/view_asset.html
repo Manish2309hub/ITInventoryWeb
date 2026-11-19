@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>View IT Asset Details</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 30px;
+        }
+
+        .container {
+            background: white;
+            max-width: 850px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            color: #174a7e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #174a7e;
+            color: white;
+            width: 35%;
+        }
+
+        a {
+            color: #174a7e;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>IT Asset Details</h1>
+
+    <table>
+        <tr>
+            <th>Asset Code</th>
+            <td>{{ asset.asset_code }}</td>
+        </tr>
+
+        <tr>
+            <th>Asset Name</th>
+            <td>{{ asset.asset_name }}</td>
+        </tr>
+
+        <tr>
+            <th>Category</th>
+            <td>{{ asset.category_name or '' }}</td>
+        </tr>
+
+        <tr>
+            <th>Brand</th>
+            <td>{{ asset.brand or '' }}</td>
+        </tr>
+
+        <tr>
+            <th>Model</th>
+            <td>{{ asset.model or '' }}</td>
+        </tr>
+
+        <tr>
+            <th>Serial Number</th>
+            <td>{{ asset.serial_number or '' }}</td>
+        </tr>
+
+        <tr>
+            <th>Branch</th>
+            <td>{{ asset.branch_name or '' }}</td>
+        </tr>
+
+        <tr>
+            <th>Status</th>
+            <td>{{ asset.status }}</td>
+        </tr>
+    </table>
+
+    <p>
+        <a href="{{ url_for('asset_list') }}">
+            Back to IT Asset Register
+        </a>
+    </p>
+
+</div>
+
+</body>
+</html>

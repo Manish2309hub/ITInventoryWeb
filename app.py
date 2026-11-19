@@ -428,6 +428,165 @@ def edit_category(category_id):
         category=category
     )
 
+# =====================================
+# LESSON 5B - STEP 1: VIEW ASSET DETAILS
+# =====================================
+
+@app.route("/assets/view/<int:asset_id>")
+@login_required
+def view_asset(asset_id):
+
+    conn = get_db()
+
+    asset = conn.execute("""
+        SELECT
+            a.*,
+            c.category_name,
+            b.branch_name
+        FROM assets a
+        LEFT JOIN asset_categories c
+            ON a.category_id = c.id
+        LEFT JOIN branches b
+            ON a.branch_id = b.id
+        WHERE a.id = ?
+    """, (asset_id,)).fetchone()
+
+    conn.close()
+
+    if asset is None:
+        abort(404)
+
+    return render_template(
+        "view_asset.html",
+        asset=asset
+    )
+
+
+# ==========================================
+# LESSON 5B - STEP 2: EDIT AND UPDATE ASSET
+# ==========================================
+
+@app.route("/assets/edit/<int:asset_id>",
+           methods=["GET", "POST"])
+@login_required
+def edit_asset(asset_id):
+
+    # Only administrators can edit assets
+    if session.get("role") != "Admin":
+        abort(403)
+
+    conn = get_db()
+
+    asset = conn.execute(
+        "SELECT * FROM assets WHERE id = ?",
+        (asset_id,)
+    ).fetchone()
+
+    if asset is None:
+        conn.close()
+        abort(404)
+
+    categories = conn.execute(
+        "SELECT * FROM asset_categories ORDER BY category_name"
+    ).fetchall()
+
+    branches = conn.execute(
+        "SELECT * FROM branches ORDER BY branch_name"
+    ).fetchall()
+
+    if request.method == "POST":
+            
+        if request.form.get("csrf_token") != session.get("csrf_token"):
+            abort(400, description="Invalid CSRF token")
+
+        asset_name = request.form.get(
+            "asset_name", ""
+        ).strip()
+
+        serial_number = request.form.get(
+            "serial_number", ""
+        ).strip()
+
+        brand = request.form.get(
+            "brand", ""
+        ).strip()
+
+        model = request.form.get(
+            "model", ""
+        ).strip()
+
+        category_id = request.form.get(
+            "category_id", type=int
+        )
+
+        branch_id = request.form.get(
+            "branch_id", type=int
+        )
+
+        status = request.form.get(
+            "status", ""
+        ).strip()
+
+        valid_statuses = (
+            "Active", "Spare", "Repair", "Obsolete"
+        )
+
+        valid_category_ids = {
+            row["id"] for row in categories
+        }
+
+        valid_branch_ids = {
+            row["id"] for row in branches
+        }
+
+        if (
+            not asset_name
+            or category_id not in valid_category_ids
+            or branch_id not in valid_branch_ids
+            or status not in valid_statuses
+        ):
+            conn.close()
+            abort(400, description="Invalid asset details.")
+
+        conn.execute("""
+            UPDATE assets
+            SET
+                asset_name = ?,
+                serial_number = ?,
+                brand = ?,
+                model = ?,
+                category_id = ?,
+                branch_id = ?,
+                status = ?
+            WHERE id = ?
+        """, (
+            asset_name,
+            serial_number,
+            brand,
+            model,
+            category_id,
+            branch_id,
+            status,
+            asset_id
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(
+            url_for("view_asset", asset_id=asset_id)
+        )
+
+    conn.close()
+
+    return render_template(
+        "edit_asset.html",
+        asset=asset,
+        categories=categories,
+        branches=branches
+    )
+
+
 
 
 if __name__ == "__main__":
