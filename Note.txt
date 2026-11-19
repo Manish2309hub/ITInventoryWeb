@@ -1,0 +1,5 @@
+C:\Users\AacblAdmin\Documents\ITInventoryWeb>python -m venv venv
+
+C:\Users\AacblAdmin\Documents\ITInventoryWeb>.\venv\Scripts\activate
+
+for activation virtual environment in windows
