@@ -587,6 +587,75 @@ def edit_asset(asset_id):
     )
 
 
+# ==========================================
+# LESSON 5B - STEP 3C
+# ASSET STATUS MASTER MANAGEMENT
+# ==========================================
+
+@app.route("/statuses", methods=["GET", "POST"])
+@login_required
+def status_list():
+
+    # Only administrators can manage statuses
+    if session.get("role") != "Admin":
+        abort(403)
+
+    conn = get_db()
+
+    if request.method == "POST":
+
+        # Verify CSRF token
+        if (
+            not session.get("csrf_token")
+            or request.form.get("csrf_token")
+            != session.get("csrf_token")
+        ):
+            conn.close()
+            abort(400, description="Invalid CSRF token")
+
+        status_name = request.form.get(
+            "status_name", ""
+        ).strip()
+
+        if not status_name:
+            conn.close()
+            return redirect(url_for("status_list"))
+
+        if len(status_name) > 50:
+            conn.close()
+            abort(400, description="Status name too long")
+
+        try:
+            conn.execute("""
+                INSERT INTO asset_statuses
+                (status_name, is_active)
+                VALUES (?, 1)
+            """, (status_name,))
+
+            conn.commit()
+
+        except sqlite3.IntegrityError:
+            # Duplicate status name
+            conn.rollback()
+
+        finally:
+            conn.close()
+
+        return redirect(url_for("status_list"))
+
+    statuses = conn.execute("""
+        SELECT id, status_name, is_active
+        FROM asset_statuses
+        ORDER BY id
+    """).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "statuses.html",
+        statuses=statuses
+    )
+
 
 
 if __name__ == "__main__":
