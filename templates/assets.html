@@ -120,6 +120,98 @@
             text-decoration: underline;
         }
 
+/* =========================================
+   LESSON 5B - STEP 3F-3
+   Professional IT Asset Register Table
+   ========================================= */
+
+        .asset-table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .asset-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            min-width: 1000px;
+        }
+
+        .asset-table thead {
+            background-color: #174a7e;
+            color: white;
+        }
+
+        .asset-table th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .asset-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;                
+            vertical-align: middle;
+        }
+
+        .asset-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .asset-table tbody tr:hover {
+            background-color: #eaf3ff;
+            transition: background-color 0.2s;
+        }
+
+        .asset-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+/* View and Edit action links */
+
+        .asset-action {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-right: 5px;
+        }
+
+        .asset-view {
+            background-color: #e0f2fe;
+            color: #075985;
+        }
+
+        .asset-edit {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .asset-action:hover {
+            filter: brightness(0.92);
+        }
+
+/* Responsive table */
+
+    @media (max-width: 768px) {
+        .asset-table { 
+            font-size: 12px;
+        }
+
+        .asset-table th,
+        .asset-table td {
+            padding: 9px;
+        }
+    }
+
     </style>
 </head>
 <body>
