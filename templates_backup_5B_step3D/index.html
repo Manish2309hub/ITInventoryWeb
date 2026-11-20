@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IT Inventory Management System</title>
+</head>
+
+<body>
+
+    <h1>IT Inventory Management System</h1>
+
+    <h2>Welcome to IT Inventory Management</h2>
+
+    <p>Our IT Inventory Management System is running successfully.</p>
+
+    <hr>
+
+    <h3>System Modules</h3>
+    
+    <ul>
+            <li> 
+                <a href="{{ url_for('asset_list') }}">
+                    Open IT Asset Register
+            </li>
+
+            <li>
+                <a href="{{ url_for('category_list') }}">
+                    Open Asset Category Master
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('status_list') }}">
+                    Open Asset Status Master
+                </a>
+            </li>
+            
+        <li>Branch Management</li>
+        <li>Staff Management</li>
+        <li>Device Allocation</li>
+        <li>AMC Management</li>
+        <li>Warranty Management</li>
+    </ul>
+
+</body>
+
+<p>
+    Logged in as: {{ session["username"] }}
+</p>
+
+<form action="{{ url_for('logout') }}"
+      method="POST">
+    <input type="hidden" 
+           name="csrf_token"
+           value="{{ session['csrf_token'] }}">
+    <button type="submit">Logout</button>
+</form>
+
+<hr>
+
+</html>

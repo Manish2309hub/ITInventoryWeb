@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Edit IT Asset</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 30px;
+        }
+
+        .container {
+            background: white;
+            max-width: 600px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 8px;
+        }
+
+        h2 {
+            color: #174a7e;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #174a7e;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        a {
+            color: #174a7e;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Edit IT Asset</h2>
+
+    <form method="POST">
+        <input type="hidden"
+                name="csrf_token"
+                value="{{ session['csrf_token'] }}">
+
+        <label>Asset Code</label>
+        <input type="text"
+               value="{{ asset.asset_code }}"
+               readonly>
+
+        <label>Asset Name</label>
+        <input type="text"
+               name="asset_name"
+               value="{{ asset.asset_name }}"
+               required>
+
+        <label>Serial Number</label>
+        <input type="text"
+               name="serial_number"
+               value="{{ asset.serial_number or '' }}">
+
+        <label>Brand</label>
+        <input type="text"
+               name="brand"
+               value="{{ asset.brand or '' }}">
+
+        <label>Model</label>
+        <input type="text"
+               name="model"
+               value="{{ asset.model or '' }}">
+
+        <label>Category</label>
+        <select name="category_id" required>
+            {% for category in categories %}
+            <option value="{{ category.id }}"
+                {% if category.id == asset.category_id %}
+                selected
+                {% endif %}>
+                {{ category.category_name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label>Branch</label>
+        <select name="branch_id" required>
+            {% for branch in branches %}
+            <option value="{{ branch.id }}"
+                {% if branch.id == asset.branch_id %}
+                selected
+                {% endif %}>
+                {{ branch.branch_name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <!-- <label>Status</label>
+        <select name="status">
+            {% for status in
+               ['Active', 'Spare', 'Repair', 'Obsolete'] %}
+            <option value="{{ status }}"
+                {% if asset.status == status %}
+                selected
+                {% endif %}>
+                {{ status }}
+            </option>
+            {% endfor %}
+        </select> -->
+
+        <label>Status</label>
+        <select name="status" required>
+            {% for status in statuses %}
+            <option value="{{ status.status_name }}"
+                {% if status.status_name == asset.status %}
+                selected
+                {% endif %}>
+                {{ status.status_name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">
+            Update Asset
+        </button>
+
+    </form>
+
+    <p>
+        <a href="{{ url_for('asset_list') }}">
+            Back to IT Asset Register
+        </a>
+    </p>
+
+</div>
+
+</body>
+</html>

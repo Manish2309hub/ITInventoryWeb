@@ -116,7 +116,7 @@
             {% endfor %}
         </select>
 
-        <label>Status</label>
+        <!-- <label>Status</label>
         <select name="status">
             {% for status in
                ['Active', 'Spare', 'Repair', 'Obsolete'] %}
@@ -125,6 +125,18 @@
                 selected
                 {% endif %}>
                 {{ status }}
+            </option>
+            {% endfor %}
+        </select> -->
+
+        <label>Status</label>
+        <select name="status" required>
+            {% for status in statuses %}
+            <option value="{{ status.status_name }}"
+                {% if status.status_name == asset.status %}
+                selected
+                {% endif %}>
+                {{ status.status_name }}
             </option>
             {% endfor %}
         </select>

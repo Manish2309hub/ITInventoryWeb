@@ -145,11 +145,22 @@ def logout():
 
 @app.route("/assets")
 @login_required
+
 def asset_list():
     search = request.args.get("search", "").strip()
+    status_filter = request.args.get("status", "").strip()
 
     conn = get_db()
 
+    # Load statuses from Asset Status Master
+    statuses = conn.execute("""
+        SELECT status_name
+        FROM asset_statuses
+        WHERE is_active = 1
+        ORDER BY status_name
+    """).fetchall()
+
+    # Existing asset search plus status filtering
     assets = conn.execute("""
         SELECT
             a.id,
@@ -164,18 +175,29 @@ def asset_list():
         FROM assets a
         JOIN branches b ON a.branch_id = b.id
         JOIN asset_categories c ON a.category_id = c.id
-        WHERE a.asset_code LIKE ?
-           OR a.asset_name LIKE ?
-           OR COALESCE(a.serial_number, '') LIKE ?
+        WHERE (
+            a.asset_code LIKE ?
+            OR a.asset_name LIKE ?
+            OR COALESCE(a.serial_number, '') LIKE ?
+        )
+        AND (? = '' OR a.status = ?)
         ORDER BY a.id DESC
-    """, (f"%{search}%",) * 3).fetchall()
+    """, (
+        f"%{search}%",
+        f"%{search}%",
+        f"%{search}%",
+        status_filter,
+        status_filter
+    )).fetchall()
 
     conn.close()
 
     return render_template(
         "assets.html",
         assets=assets,
-        search=search
+        search=search,
+        statuses=statuses,
+        status_filter=status_filter
     )
 
 
@@ -261,12 +283,26 @@ def add_asset():
         "SELECT * FROM branches ORDER BY branch_name"
     ).fetchall()
 
+# Lesson 5B - Step 3D: Load enabled asset statuses
+    statuses = conn.execute(
+        """
+        SELECT id, status_name
+        FROM asset_statuses
+        WHERE is_active = 1
+    ORDER BY status_name
+    """
+).fetchall()
+
+
+    
+
     conn.close()
 
     return render_template(
         "add_asset.html",
         categories=categories,
         branches=branches,
+        statuses=statuses,
         csrf_token=session.get("csrf_token")
     )
 
@@ -526,11 +562,16 @@ def edit_asset(asset_id):
         status = request.form.get(
             "status", ""
         ).strip()
-
-        valid_statuses = (
-            "Active", "Spare", "Repair", "Obsolete"
-        )
-
+        
+        valid_statuses = {
+            row["status_name"]
+            for row in conn.execute("""
+                SELECT status_name
+                FROM asset_statuses
+                WHERE is_active = 1
+            """).fetchall()
+        }
+        
         valid_category_ids = {
             row["id"] for row in categories
         }
@@ -576,6 +617,33 @@ def edit_asset(asset_id):
         return redirect(
             url_for("view_asset", asset_id=asset_id)
         )
+    
+    # # Fetch enabled statuses for Edit Asset dropdown
+    # statuses = conn.execute("""
+    #         SELECT status_name
+    #         FROM asset_statuses
+    #         WHERE is_active = 1
+    #         ORDER BY status_name
+    #     """).fetchall()
+
+    # conn.close()
+
+    # return render_template(
+    #     "edit_asset.html",
+    #     asset=asset,
+    #     categories=categories,
+    #     branches=branches,
+    #     statuses=statuses
+    # )
+
+
+    # Fetch enabled statuses for Edit Asset dropdown
+    statuses = conn.execute("""
+        SELECT status_name
+        FROM asset_statuses
+        WHERE is_active = 1
+        ORDER BY status_name
+    """).fetchall()
 
     conn.close()
 
@@ -583,8 +651,12 @@ def edit_asset(asset_id):
         "edit_asset.html",
         asset=asset,
         categories=categories,
-        branches=branches
+        branches=branches,
+        statuses=statuses
     )
+
+
+    
 
 
 # ==========================================
