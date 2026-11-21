@@ -1,14 +1,24 @@
 
 
+import csv
+import io
 import os
 import secrets
 import sqlite3
+
+# Lesson 5B - Step 3H: Excel Export
+
+from openpyxl import Workbook
+
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 from functools import wraps
 
 from flask import (
     Flask, render_template, request,
-    redirect, url_for, session, abort, flash
-)
+    redirect, url_for, session, abort, flash,
+    Response, send_file)
+
 from werkzeug.security import check_password_hash
 
 from database import DB_PATH
@@ -149,6 +159,7 @@ def logout():
 def asset_list():
     search = request.args.get("search", "").strip()
     status_filter = request.args.get("status", "").strip()
+    branch_filter = request.args.get("branch", "").strip()
 
     conn = get_db()
 
@@ -181,14 +192,24 @@ def asset_list():
             OR COALESCE(a.serial_number, '') LIKE ?
         )
         AND (? = '' OR a.status = ?)
+        AND (? = '' OR a.branch_id = ?)
         ORDER BY a.id DESC
     """, (
         f"%{search}%",
         f"%{search}%",
         f"%{search}%",
         status_filter,
-        status_filter
+        status_filter,
+        branch_filter,
+        branch_filter        
     )).fetchall()
+
+    # Lesson 5B - Step 3F-4: Load branches for filter
+    branches = conn.execute("""
+        SELECT id, branch_name
+        FROM branches
+        ORDER BY branch_name
+        """).fetchall()
 
     conn.close()
 
@@ -197,7 +218,251 @@ def asset_list():
         assets=assets,
         search=search,
         statuses=statuses,
-        status_filter=status_filter
+        status_filter=status_filter,
+        branches=branches,
+        branch_filter=branch_filter
+    )
+
+# ==========================================
+# LESSON 5B - STEP 3G: EXPORT ASSETS TO CSV
+# ==========================================
+
+@app.route("/assets/export")
+@login_required
+def export_assets_csv():
+    search = request.args.get("search", "").strip()
+    status_filter = request.args.get("status", "").strip()
+    branch_filter = request.args.get("branch", "").strip()
+
+    conn = get_db()
+
+    assets = conn.execute("""
+        SELECT
+            a.asset_code,
+            a.asset_name,
+            c.category_name,
+            a.brand,
+            a.model,
+            a.serial_number,
+            b.branch_name,
+            a.status
+        FROM assets a
+        JOIN branches b ON a.branch_id = b.id
+        JOIN asset_categories c ON a.category_id = c.id
+        WHERE (
+            a.asset_code LIKE ?
+            OR a.asset_name LIKE ?
+            OR COALESCE(a.serial_number, '') LIKE ?
+        )
+        AND (? = '' OR a.status = ?)
+        AND (? = '' OR a.branch_id = ?)
+        ORDER BY a.id DESC
+    """, (
+        f"%{search}%",
+        f"%{search}%",
+        f"%{search}%",
+        status_filter,
+        status_filter,
+        branch_filter,
+        branch_filter
+    )).fetchall()
+
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "Asset Code", "Asset Name", "Category",
+        "Brand", "Model", "Serial Number",
+        "Branch", "Status"
+    ])
+
+    for asset in assets:
+        writer.writerow(list(asset))
+
+    return Response(
+        "\ufeff" + output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition":
+                "attachment; filename=IT_Asset_Register.csv"
+        }
+    )
+
+# ============================================
+# LESSON 5B - STEP 3H: EXPORT ASSETS TO EXCEL
+# ============================================
+
+@app.route("/assets/export-excel")
+@login_required
+def export_assets_excel():
+    search = request.args.get("search", "").strip()
+    status_filter = request.args.get("status", "").strip()
+    branch_filter = request.args.get("branch", "").strip()
+
+    # Step 3H-4: Retrieve filtered IT assets
+    conn = get_db()
+
+    assets = conn.execute("""
+        SELECT
+            a.asset_code,
+            a.asset_name,
+            c.category_name,
+            a.brand,
+            a.model,
+            a.serial_number,
+            b.branch_name,
+            a.status
+        FROM assets a
+        JOIN branches b ON a.branch_id = b.id
+        JOIN asset_categories c ON a.category_id = c.id
+        WHERE (
+            a.asset_code LIKE ?
+            OR a.asset_name LIKE ?
+            OR COALESCE(a.serial_number, '') LIKE ?
+        )
+        AND (? = '' OR a.status = ?)
+        AND (? = '' OR a.branch_id = ?)
+        ORDER BY a.id DESC
+    """, (
+        f"%{search}%",
+        f"%{search}%",
+        f"%{search}%",
+        status_filter,
+        status_filter,
+        branch_filter,
+        branch_filter
+    )).fetchall()
+
+    conn.close()
+
+
+    # Lesson 5B - Step 3H-5: Create Excel Workbook
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "IT Asset Register"
+
+    # Create column headings
+    headers = [
+        "Asset Code",
+        "Asset Name",
+        "Category",
+        "Brand",
+        "Model",
+        "Serial Number",
+        "Branch",
+        "Status"
+    ]
+
+    ws.append(headers)
+
+    # Lesson 5B - Step 3H-6: Format Excel Headings
+
+    header_fill = PatternFill(
+        start_color="194D80",
+        end_color="194D80",
+        fill_type="solid"
+    )
+
+    header_font = Font(
+        bold=True,
+        color="FFFFFF",
+        size=11
+    )
+
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+    # Set heading row height
+    ws.row_dimensions[1].height = 25
+
+# Lesson 5B - Step 3H-7: Excel Column Widths
+
+    column_widths = {
+        "A": 16,  # Asset Code
+        "B": 30,  # Asset Name
+        "C": 22,  # Category
+        "D": 22,  # Brand
+        "E": 22,  # Model
+        "F": 24,  # Serial Number
+        "G": 22,  # Branch
+        "H": 18   # Status
+    }
+
+    for column, width in column_widths.items():
+        ws.column_dimensions[column].width = width
+
+    # Keep the heading row visible while scrolling
+    ws.freeze_panes = "A2"
+
+
+    # Lesson 5B - Step 3I-3A: Excel Print Settings
+    ws.page_setup.orientation = "landscape"
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+
+    # Lesson 5B - Step 3I-3B: Fit Columns to Page Width
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+
+    # Lesson 5B - Step 3I-3C
+    # Repeat column headings on every printed page
+    ws.print_title_rows = "1:1"
+
+
+    # Add asset records from SQLite
+    for asset in assets:
+        ws.append(list(asset))
+
+    
+    # Lesson 5B - Step 3I-1: Enable Excel AutoFilter
+    ws.auto_filter.ref = ws.dimensions
+
+
+# Lesson 5B - Step 3I-2B: Row Colors and Borders
+
+    light_blue_fill = PatternFill(
+        start_color="EAF3F8",
+        end_color="EAF3F8",
+        fill_type="solid"
+    )
+
+    thin_border = Border(
+        left=Side(style="thin", color="D9E2F3"),
+        right=Side(style="thin", color="D9E2F3"),
+        top=Side(style="thin", color="D9E2F3"),
+        bottom=Side(style="thin", color="D9E2F3")
+    )
+
+    for row in ws.iter_rows(min_row=2):
+        for cell in row:
+            cell.border = thin_border
+
+            if cell.row % 2 == 0:
+                cell.fill = light_blue_fill
+  
+   
+# Lesson 5B - Step 3H-8: Download Excel Workbook
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="IT_Asset_Register.xlsx",
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
     )
 
 
@@ -292,10 +557,8 @@ def add_asset():
     ORDER BY status_name
     """
 ).fetchall()
-
-
-    
-
+# Lesson 5B - Step 3F-4: Load branches for filter
+        
     conn.close()
 
     return render_template(

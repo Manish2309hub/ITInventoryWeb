@@ -1,0 +1,62 @@
+
+/* Lesson 5B - Step 3G-7: Export CSV Button */
+
+.export-csv-btn {
+    display: inline-block;
+    background-color: #198754;
+    color: white;
+    padding: 9px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 12px;
+}
+
+.export-csv-btn:hover {
+    background-color: #146c43;
+    color: white;
+    text-decoration: none;
+}
+
+
+/* Lesson 5B - Step 3G-9: Clear Filter Styling */
+
+.clear-filter {
+    display: inline-block;
+    color: #194d80;
+    padding: 9px 12px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.clear-filter:hover {
+    color: #146c43;
+    text-decoration: underline;
+}
+
+
+/* Lesson 5B - Step 3H-10: Export Excel Button */
+
+.export-excel-btn {
+    display: inline-block;
+    background-color: #2563eb;
+    color: white;
+    padding: 9px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Mouse hover effect */
+
+.export-excel-btn:hover {
+    background-color: #1d4ed8;
+    color: white;
+    text-decoration: none;
+}
+
